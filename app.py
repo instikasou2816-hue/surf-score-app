@@ -80,3 +80,57 @@ with st.form("five_player_form"):
     if submitted_five and スコアリスト:
         st.session_state['scores'].extend(スコアリスト)
         st.success(f"{heat_name} に 5人分のスコアを追加しました！")
+
+import streamlit as st
+import pandas as pd
+import numpy as np
+
+st.title("サーフスコアアプリ 🏄‍♂️")
+
+# ヒート設定
+heat_name = st.text_input("ヒート名", "Round 1: ヒート 1")
+riders = st.text_area("選手名（1行ずつ）", "武藤波琉\n木下嵩道\n小松一絆\n中鉢晴心").splitlines()
+num_judges = 3
+num_waves = st.slider("最大ライディング数", 1, 5, 3)
+
+# スコア入力
+scores = {}
+
+st.write(f"### {heat_name}")
+
+for rider in riders:
+    st.subheader(f"選手: {rider}")
+    rider_scores = []
+
+    for wave in range(1, num_waves + 1):
+        st.write(f"**Wave {wave}**")
+        wave_scores = []
+
+        cols = st.columns(num_judges)
+        for j in range(num_judges):
+            with cols[j]:
+                score = st.number_input(f"Judge {j+1}", min_value=0.0, max_value=10.0, step=0.01, key=f"{rider}_w{wave}_j{j}")
+                wave_scores.append(score)
+
+        avg_score = np.round(np.mean(wave_scores), 2)
+        st.write(f"→ 平均点: **{avg_score}**")
+        rider_scores.append(avg_score)
+
+    scores[rider] = rider_scores
+
+# 結果表示
+st.write("## 結果一覧")
+
+result_data = []
+for rider, avg_scores in scores.items():
+    total = np.round(sum(avg_scores), 2)
+    result_data.append([rider] + avg_scores + [total])
+
+columns = ["選手名"] + [f"Wave {i+1}" for i in range(num_waves)] + ["合計"]
+result_df = pd.DataFrame(result_data, columns=columns)
+
+# 合計点でソート
+result_df = result_df.sort_values("合計", ascending=False).reset_index(drop=True)
+result_df.index = result_df.index + 1  # ランクを1始まりに
+
+st.table(result_df)
