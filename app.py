@@ -46,3 +46,37 @@ if st.session_state['scores']:
         st.dataframe(df[df["ヒート"] == heat_name].sort_values("平均点", ascending=False), use_container_width=True)
 else:
     st.info("まだスコアが登録されていません。")
+
+st.markdown("---")
+st.subheader("🏁 5人ヒートの一括スコア入力（ジャッジ用）")
+
+選手数 = 5
+選手名リスト = []
+スコアリスト = []
+
+with st.form("five_player_form"):
+    heat_name = st.text_input("ヒート名（例: Heat 3）", value="Heat 1")
+
+    for i in range(選手数):
+        st.markdown(f"#### 選手{i+1}")
+        name = st.text_input(f"選手{i+1}の名前", key=f"name_{i}")
+        score_a = st.number_input(f"ジャッジAの点数（選手{i+1}）", 0.0, 10.0, step=0.1, key=f"scoreA_{i}")
+        score_b = st.number_input(f"ジャッジBの点数（選手{i+1}）", 0.0, 10.0, step=0.1, key=f"scoreB_{i}")
+        score_c = st.number_input(f"ジャッジCの点数（選手{i+1}）", 0.0, 10.0, step=0.1, key=f"scoreC_{i}")
+
+        if name:
+            avg = round((score_a + score_b + score_c) / 3, 2)
+            スコアリスト.append({
+                "ヒート": heat_name,
+                "選手": name,
+                "ジャッジA": score_a,
+                "ジャッジB": score_b,
+                "ジャッジC": score_c,
+                "平均点": avg
+            })
+
+    submitted_five = st.form_submit_button("5人分を一括追加")
+
+    if submitted_five and スコアリスト:
+        st.session_state['scores'].extend(スコアリスト)
+        st.success(f"{heat_name} に 5人分のスコアを追加しました！")
